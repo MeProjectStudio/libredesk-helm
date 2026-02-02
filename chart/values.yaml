@@ -1,0 +1,133 @@
+# Default values for libredesk chart
+
+replicaCount: 1
+
+image:
+  repository: libredesk/libredesk
+  pullPolicy: IfNotPresent
+  tag: ""  # Defaults to chart appVersion
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+# System user password - CHANGE THIS IN PRODUCTION!
+systemUserPassword: "changeme123"
+
+service:
+  type: ClusterIP
+  port: 9000
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # cert-manager.io/cluster-issuer: letsencrypt-prod
+    # nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+  hosts:
+    - host: libredesk.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  #  - secretName: libredesk-tls
+  #    hosts:
+  #      - libredesk.local
+
+persistence:
+  size: 10Gi
+  storageClass: ""
+
+resources: {}
+  # limits:
+  #   cpu: 1000m
+  #   memory: 1Gi
+  # requests:
+  #   cpu: 500m
+  #   memory: 512Mi
+
+# PostgreSQL configuration
+postgresql:
+  enabled: true
+  image:
+    repository: postgres
+    tag: "16-alpine"
+    pullPolicy: IfNotPresent
+  auth:
+    username: libredesk
+    password: libredesk
+    database: libredesk
+  persistence:
+    size: 10Gi
+    storageClass: ""
+  resources: {}
+
+# Redis configuration
+redis:
+  enabled: true
+  image:
+    repository: redis
+    tag: "7-alpine"
+    pullPolicy: IfNotPresent
+  resources: {}
+
+# Libredesk application configuration
+config:
+  app:
+    logLevel: "info"
+    env: "prod"
+    checkUpdates: true
+    # IMPORTANT: Generate using `openssl rand -hex 16` - must be 32 characters long
+    encryptionKey: "CHANGE-ME-32-CHAR-RANDOM-STRING!"
+  
+  upload:
+    provider: "fs"
+    fs:
+      uploadPath: "/libredesk/uploads"
+  
+  db:
+    host: "libredesk-postgres"
+    port: 5432
+    user: "libredesk"
+    password: "libredesk"
+    database: "libredesk"
+    sslMode: "disable"
+    maxOpen: 30
+    maxIdle: 30
+    maxLifetime: "300s"
+  
+  redis:
+    address: "libredesk-redis:6379"
+    user: ""
+    password: ""
+    db: 0
+  
+  message:
+    outgoingQueueWorkers: 10
+    incomingQueueWorkers: 10
+    messageOutgoingScanInterval: "50ms"
+    incomingQueueSize: 5000
+    outgoingQueueSize: 5000
+  
+  notification:
+    concurrency: 2
+    queueSize: 2000
+  
+  automation:
+    workerCount: 10
+  
+  autoassigner:
+    autoassignInterval: "5m"
+  
+  webhook:
+    workers: 5
+    queueSize: 10000
+    timeout: "15s"
+  
+  conversation:
+    unsnoozeInterval: "5m"
+    draftRetentionPeriod: "360h"
+  
+  sla:
+    evaluationInterval: "5m"
+

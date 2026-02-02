@@ -1,0 +1,78 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "libredesk.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "libredesk.labels" . | nindent 4 }}
+data:
+  config.toml: |
+    [app]
+    log_level = {{ .Values.config.app.logLevel | quote }}
+    env = {{ .Values.config.app.env | quote }}
+    check_updates = {{ .Values.config.app.checkUpdates }}
+    encryption_key = {{ .Values.config.app.encryptionKey | quote }}
+
+    [app.server]
+    address = "0.0.0.0:9000"
+    socket = ""
+    disable_secure_cookies = false
+    read_timeout = "5s"
+    write_timeout = "5s"
+    max_body_size = 104857600
+    read_buffer_size = 65536
+    keepalive_timeout = "10s"
+
+    [upload]
+    provider = {{ .Values.config.upload.provider | quote }}
+
+    [upload.fs]
+    upload_path = {{ .Values.config.upload.fs.uploadPath | quote }}
+
+    [db]
+    host = {{ .Values.config.db.host | quote }}
+    port = {{ .Values.config.db.port }}
+    user = {{ .Values.config.db.user | quote }}
+    password = {{ .Values.config.db.password | quote }}
+    database = {{ .Values.config.db.database | quote }}
+    ssl_mode = {{ .Values.config.db.sslMode | quote }}
+    max_open = {{ .Values.config.db.maxOpen }}
+    max_idle = {{ .Values.config.db.maxIdle }}
+    max_lifetime = {{ .Values.config.db.maxLifetime | quote }}
+
+    [redis]
+    address = {{ .Values.config.redis.address | quote }}
+    user = {{ .Values.config.redis.user | quote }}
+    password = {{ .Values.config.redis.password | quote }}
+    db = {{ .Values.config.redis.db }}
+
+    [message]
+    outgoing_queue_workers = {{ .Values.config.message.outgoingQueueWorkers }}
+    incoming_queue_workers = {{ .Values.config.message.incomingQueueWorkers }}
+    message_outgoing_scan_interval = {{ .Values.config.message.messageOutgoingScanInterval | quote }}
+    incoming_queue_size = {{ .Values.config.message.incomingQueueSize }}
+    outgoing_queue_size = {{ .Values.config.message.outgoingQueueSize }}
+
+    [notification]
+    concurrency = {{ .Values.config.notification.concurrency }}
+    queue_size = {{ .Values.config.notification.queueSize }}
+
+    [automation]
+    worker_count = {{ .Values.config.automation.workerCount }}
+
+    [autoassigner]
+    autoassign_interval = {{ .Values.config.autoassigner.autoassignInterval | quote }}
+
+    [webhook]
+    workers = {{ .Values.config.webhook.workers }}
+    queue_size = {{ .Values.config.webhook.queueSize }}
+    timeout = {{ .Values.config.webhook.timeout | quote }}
+
+    [conversation]
+    unsnooze_interval = {{ .Values.config.conversation.unsnoozeInterval | quote }}
+    draft_retention_period = {{ .Values.config.conversation.draftRetentionPeriod | quote }}
+
+    [sla]
+    evaluation_interval = {{ .Values.config.sla.evaluationInterval | quote }}
+

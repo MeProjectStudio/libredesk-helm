@@ -1,0 +1,21 @@
+apiVersion: v2
+name: libredesk
+description: Modern, open source, self-hosted customer support desk
+type: application
+version: 1.0.0
+appVersion: "1.0.1"
+keywords:
+  - libredesk
+  - helpdesk
+  - customer-support
+  - ticketing
+  - support-desk
+home: https://libredesk.io
+icon: https://raw.githubusercontent.com/abhinavxd/libredesk/main/public/logo.svg
+sources:
+  - https://github.com/abhinavxd/libredesk
+  - https://github.com/MeProjectStudio/libredesk-helm
+maintainers:
+  - name: simulyacr
+    email: a.borisov@meproject.ru
+
