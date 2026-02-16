@@ -15,22 +15,22 @@ This Helm chart deploys [libredesk](https://github.com/abhinavxd/libredesk) on a
 ## Installation
 
 ### Install from OCI Registry
-Chart is available on MeProject OCI registry:
+Chart is available on GitHub Container Registry:
 
 ```bash
-helm pull oci://registry.mprjct.ru/libredesk/libredesk-helm --version 1.0.2
+helm pull oci://ghcr.io/meprojectstudio/libredesk-helm --version 1.0.2
 ```
 
 To install the chart directly:
 
 ```bash
-helm install libredesk oci://registry.mprjct.ru/libredesk/libredesk-helm --version 1.0.2
+helm install libredesk oci://ghcr.io/meprojectstudio/libredesk-helm --version 1.0.2
 ```
 
 ### Install with custom values
 
 ```bash
-helm install libredesk oci://registry.mprjct.ru/libredesk/libredesk-helm --version 1.0.2 \
+helm install libredesk oci://ghcr.io/meprojectstudio/libredesk-helm --version 1.0.2 \
   --set systemUserPassword=your-secure-password \
   --set config.app.encryptionKey=$(openssl rand -hex 16)
 ```
@@ -60,13 +60,13 @@ For a complete list of configuration options, see the `values.yaml` file.
 ### Upgrade to a new version
 
 ```bash
-helm upgrade libredesk oci://registry.mprjct.ru/libredesk/libredesk-helm --version <new-version>
+helm upgrade libredesk oci://ghcr.io/meprojectsudio/libredesk-helm --version <new-version>
 ```
 
 ### Upgrade with new values
 
 ```bash
-helm upgrade libredesk oci://registry.mprjct.ru/libredesk/libredesk-helm --version <new-version> -f values.yaml
+helm upgrade libredesk oci://ghcr.io/meprojectsudio/libredesk-helm --version <new-version> -f values.yaml
 ```
 
 ## Uninstalling
