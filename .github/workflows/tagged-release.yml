@@ -1,0 +1,73 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+      - "v*.*.*-rc*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Get tag version and detect prerelease
+        id: get_version
+        run: |
+          export TAG=${${{ github.ref_name }}#?}
+          echo $VERSION >> $GITHUB_OUTPUT
+          # Check if this is a prerelease (contains -rc)
+          if [[ "${{ github.ref_name }}" == *"-rc"* ]]; then
+            echo "IS_PRERELEASE=true" >> $GITHUB_OUTPUT
+            echo "This is a prerelease: $TAG"
+          else
+            echo "IS_PRERELEASE=false" >> $GITHUB_OUTPUT
+            echo "This is a stable release: $TAG"
+          fi
+
+      - name: Update Chart.yaml version
+        run: |
+          sed -i "s/^version:.*/version: ${{ steps.get_version.outputs.VERSION }}/" chart/Chart.yaml
+          cat chart/Chart.yaml
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v4.0.4
+
+      - name: Package chart
+        run: |
+          helm package chart --version ${{ steps.get_version.outputs.VERSION }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push chart to GHCR
+        run: |
+          helm push libredesk-${{ steps.get_version.outputs.VERSION }}.tgz oci://ghcr.io/meprojectsudio/libredesk-helm
+
+      - name: Generate a changelog
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: cliff.toml
+          args: --verbose
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            libredesk-${{ steps.get_version.outputs.VERSION }}.tgz
+          body: ${{ steps.git-cliff.outputs.changelog }}
+          draft: false
+          prerelease: ${{ steps.get_version.outputs.IS_PRERELEASE }}
