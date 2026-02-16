@@ -21,8 +21,8 @@ jobs:
       - name: Get tag version and detect prerelease
         id: get_version
         run: |
-          export TAG="${${{ github.ref_name }}//v/}"
-          echo $VERSION >> $GITHUB_OUTPUT
+          export TAG="${GITHUB_REF_NAME#v}"
+          echo "VERSION=$TAG" >> $GITHUB_OUTPUT
           # Check if this is a prerelease (contains -rc)
           if [[ "${{ github.ref_name }}" == *"-rc"* ]]; then
             echo "IS_PRERELEASE=true" >> $GITHUB_OUTPUT
