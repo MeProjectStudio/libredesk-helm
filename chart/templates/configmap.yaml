@@ -12,7 +12,7 @@ data:
     log_level = {{ .Values.config.app.logLevel | quote }}
     env = {{ .Values.config.app.env | quote }}
     check_updates = {{ .Values.config.app.checkUpdates }}
-    encryption_key = {{ .Values.config.app.encryptionKey | quote }}
+    encryption_key = {{ if .Values.config.app.existingSecret.enabled }}"__ENCRYPTION_KEY__"{{ else }}{{ .Values.config.app.encryptionKey | quote }}{{ end }}
 
     [app.server]
     address = "0.0.0.0:9000"
@@ -31,10 +31,10 @@ data:
     upload_path = {{ .Values.config.upload.fs.uploadPath | quote }}
 
     [db]
-    host = {{ .Values.config.db.host | quote }}
+    host = {{ ternary (printf "%s-postgres" (include "libredesk.fullname" .)) .Values.config.db.host .Values.postgresql.enabled | quote }}
     port = {{ .Values.config.db.port }}
     user = {{ .Values.config.db.user | quote }}
-    password = {{ .Values.config.db.password | quote }}
+    password = {{ if .Values.config.db.existingSecret.enabled }}"__DB_PASSWORD__"{{ else }}{{ .Values.config.db.password | quote }}{{ end }}
     database = {{ .Values.config.db.database | quote }}
     ssl_mode = {{ .Values.config.db.sslMode | quote }}
     max_open = {{ .Values.config.db.maxOpen }}
@@ -42,9 +42,9 @@ data:
     max_lifetime = {{ .Values.config.db.maxLifetime | quote }}
 
     [redis]
-    address = {{ .Values.config.redis.address | quote }}
+    address = {{ ternary (printf "%s-redis:6379" (include "libredesk.fullname" .)) .Values.config.redis.address .Values.redis.enabled | quote }}
     user = {{ .Values.config.redis.user | quote }}
-    password = {{ .Values.config.redis.password | quote }}
+    password = {{ if .Values.config.redis.existingSecret.enabled }}"__REDIS_PASSWORD__"{{ else }}{{ .Values.config.redis.password | quote }}{{ end }}
     db = {{ .Values.config.redis.db }}
 
     [message]

@@ -11,6 +11,7 @@ spec:
   selector:
     matchLabels:
       {{- include "libredesk.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: app
   strategy:
     type: Recreate
   template:
@@ -20,6 +21,7 @@ spec:
         checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
       labels:
         {{- include "libredesk.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: app
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -32,13 +34,50 @@ spec:
           args:
             - sh
             - -c
-            - ./libredesk --install --idempotent-install --yes --config /libredesk/config.toml && ./libredesk --upgrade --yes --config /libredesk/config.toml && ./libredesk --config /libredesk/config.toml
+            - |
+              cp /libredesk/config-template/config.toml /libredesk/config/config.toml
+              {{- if .Values.config.app.existingSecret.enabled }}
+              sed -i "s/__ENCRYPTION_KEY__/$ENCRYPTION_KEY/g" /libredesk/config/config.toml
+              {{- end }}
+              {{- if .Values.config.db.existingSecret.enabled }}
+              sed -i "s/__DB_PASSWORD__/$DB_PASSWORD/g" /libredesk/config/config.toml
+              {{- end }}
+              {{- if .Values.config.redis.existingSecret.enabled }}
+              sed -i "s/__REDIS_PASSWORD__/$REDIS_PASSWORD/g" /libredesk/config/config.toml
+              {{- end }}
+              ./libredesk --install --idempotent-install --yes --config /libredesk/config/config.toml && ./libredesk --upgrade --yes --config /libredesk/config/config.toml && ./libredesk --config /libredesk/config/config.toml
           env:
             - name: LIBREDESK_SYSTEM_USER_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "libredesk.fullname" . }}-secrets
+                  {{- if .Values.systemUserPassword.existingSecret.enabled }}
+                  name: {{ .Values.systemUserPassword.existingSecret.name }}
+                  key: {{ .Values.systemUserPassword.existingSecret.key }}
+                  {{- else }}
+                  name: {{ include "libredesk.fullname" . }}-sensitive
                   key: system-user-password
+                  {{- end }}
+            {{- if .Values.config.app.existingSecret.enabled }}
+            - name: ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.config.app.existingSecret.name }}
+                  key: {{ .Values.config.app.existingSecret.key }}
+            {{- end }}
+            {{- if .Values.config.db.existingSecret.enabled }}
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.config.db.existingSecret.name }}
+                  key: {{ .Values.config.db.existingSecret.key }}
+            {{- end }}
+            {{- if .Values.config.redis.existingSecret.enabled }}
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.config.redis.existingSecret.name }}
+                  key: {{ .Values.config.redis.existingSecret.key }}
+            {{- end }}
           ports:
             - name: http
               containerPort: 9000
@@ -46,9 +85,11 @@ spec:
           volumeMounts:
             - mountPath: /libredesk/uploads
               name: uploads
-            - mountPath: /libredesk/config.toml
-              name: config
+            - mountPath: /libredesk/config-template/config.toml
+              name: config-template
               subPath: config.toml
+            - mountPath: /libredesk/config
+              name: config
           {{- with .Values.resources }}
           resources:
             {{- toYaml . | nindent 12 }}
@@ -57,7 +98,9 @@ spec:
         - name: uploads
           persistentVolumeClaim:
             claimName: {{ include "libredesk.fullname" . }}-uploads
-        - name: config
+        - name: config-template
           configMap:
             name: {{ include "libredesk.fullname" . }}-config
+        - name: config
+          emptyDir: {}
 

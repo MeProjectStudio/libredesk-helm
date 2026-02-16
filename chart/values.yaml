@@ -11,9 +11,6 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
-# System user password - CHANGE THIS IN PRODUCTION!
-systemUserPassword: "changeme123"
-
 service:
   type: ClusterIP
   port: 9000
@@ -71,6 +68,13 @@ redis:
     pullPolicy: IfNotPresent
   resources: {}
 
+# System user password (auto-generated if not provided).
+systemUserPassword:
+  existingSecret:
+    enabled: false
+    name: ""
+    key: "systemUserPassword"
+
 # Libredesk application configuration
 config:
   app:
@@ -79,6 +83,12 @@ config:
     checkUpdates: true
     # IMPORTANT: Generate using `openssl rand -hex 16` - must be 32 characters long
     encryptionKey: "CHANGE-ME-32-CHAR-RANDOM-STRING!"
+    # Use encryption key from an existing Kubernetes Secret instead of plain text above.
+    # When set, config.app.encryptionKey is ignored.
+    existingSecret:
+      enabled: false
+      name: ""
+      key: "encryptionKey"
   
   upload:
     provider: "fs"
@@ -95,12 +105,24 @@ config:
     maxOpen: 30
     maxIdle: 30
     maxLifetime: "300s"
-  
+    # Use password from an existing Kubernetes Secret instead of plain text above.
+    # When set, config.db.password is ignored.
+    existingSecret:
+      enabled: false
+      name: ""
+      key: "password"
+
   redis:
     address: "libredesk-redis:6379"
     user: ""
     password: ""
     db: 0
+    # Use password from an existing Kubernetes Secret instead of plain text above.
+    # When set, config.redis.password is ignored.
+    existingSecret:
+      enabled: false
+      name: ""
+      key: "password"
   
   message:
     outgoingQueueWorkers: 10
