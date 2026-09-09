@@ -91,9 +91,36 @@ config:
       key: "encryptionKey"
   
   upload:
+    # "fs" stores files on the mounted PVC, "s3" on S3-compatible object storage.
     provider: "fs"
     fs:
       uploadPath: "/libredesk/uploads"
+      # Signed URL expiry. Libredesk falls back to 1h when empty.
+      expiry: "1h"
+    s3:
+      # Endpoint URL. Required for non-AWS S3-compatible providers such as
+      # MinIO or Selectel; leave empty to use the default AWS endpoints.
+      url: ""
+      # Public base URL. Set only if the bucket is served publicly; when empty
+      # Libredesk hands out presigned URLs instead.
+      publicUrl: ""
+      region: ""
+      bucket: ""
+      # Optional prefix inside the bucket, e.g. "libredesk/uploads".
+      bucketPath: ""
+      # Presigned URL expiry.
+      expiry: "30m"
+      accessKey: ""
+      secretKey: ""
+      # Read the credentials from an existing Kubernetes Secret instead of the
+      # plain values above. They are injected as LIBREDESK_* environment
+      # variables, which Libredesk merges over config.toml, so the keys never
+      # reach the ConfigMap. When enabled, accessKey and secretKey are ignored.
+      existingSecret:
+        enabled: false
+        name: ""
+        accessKeyKey: "s3AccessKey"
+        secretKeyKey: "s3SecretKey"
   
   db:
     host: "libredesk-postgres"

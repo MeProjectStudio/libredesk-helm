@@ -2,7 +2,7 @@ apiVersion: v2
 name: libredesk-helm
 description: Modern, open source, self-hosted customer support desk
 type: application
-version: 1.0.2
+version: 1.1.0
 appVersion: "v1.0.1"
 keywords:
   - libredesk
