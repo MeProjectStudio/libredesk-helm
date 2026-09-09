@@ -78,6 +78,23 @@ spec:
                   name: {{ .Values.config.redis.existingSecret.name }}
                   key: {{ .Values.config.redis.existingSecret.key }}
             {{- end }}
+            {{- if and (eq .Values.config.upload.provider "s3") .Values.config.upload.s3.existingSecret.enabled }}
+            {{- /* Libredesk merges LIBREDESK_* env vars over config.toml, with
+                   "__" standing for ".". Passing the S3 credentials this way
+                   keeps them out of the ConfigMap and avoids the sed
+                   substitution used for the other secrets, which would break
+                   on keys containing a slash. */}}
+            - name: LIBREDESK_UPLOAD__S3__ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.config.upload.s3.existingSecret.name }}
+                  key: {{ .Values.config.upload.s3.existingSecret.accessKeyKey }}
+            - name: LIBREDESK_UPLOAD__S3__SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.config.upload.s3.existingSecret.name }}
+                  key: {{ .Values.config.upload.s3.existingSecret.secretKeyKey }}
+            {{- end }}
           ports:
             - name: http
               containerPort: 9000

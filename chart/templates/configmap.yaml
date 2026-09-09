@@ -27,8 +27,23 @@ data:
     [upload]
     provider = {{ .Values.config.upload.provider | quote }}
 
+    {{- if eq .Values.config.upload.provider "s3" }}
+    [upload.s3]
+    url = {{ .Values.config.upload.s3.url | quote }}
+    public_url = {{ .Values.config.upload.s3.publicUrl | quote }}
+    region = {{ .Values.config.upload.s3.region | quote }}
+    bucket = {{ .Values.config.upload.s3.bucket | quote }}
+    bucket_path = {{ .Values.config.upload.s3.bucketPath | quote }}
+    expiry = {{ .Values.config.upload.s3.expiry | default "30m" | quote }}
+    {{- if not .Values.config.upload.s3.existingSecret.enabled }}
+    access_key = {{ .Values.config.upload.s3.accessKey | quote }}
+    secret_key = {{ .Values.config.upload.s3.secretKey | quote }}
+    {{- end }}
+    {{- else }}
     [upload.fs]
     upload_path = {{ .Values.config.upload.fs.uploadPath | quote }}
+    expiry = {{ .Values.config.upload.fs.expiry | default "1h" | quote }}
+    {{- end }}
 
     [db]
     host = {{ ternary (printf "%s-postgres" (include "libredesk.fullname" .)) .Values.config.db.host .Values.postgresql.enabled | quote }}

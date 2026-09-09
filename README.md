@@ -43,6 +43,13 @@ LibreDesk configuration is rendered into a `ConfigMap` (`config.toml`) and mount
 - `__DB_PASSWORD__` (from `config.db.existingSecret`)
 - `__REDIS_PASSWORD__` (from `config.redis.existingSecret`)
 
+S3 credentials are handled differently. LibreDesk merges environment variables prefixed with
+`LIBREDESK_` over `config.toml`, with `__` standing for a dot, so when
+`config.upload.s3.existingSecret` is enabled the chart injects
+`LIBREDESK_UPLOAD__S3__ACCESS_KEY` and `LIBREDESK_UPLOAD__S3__SECRET_KEY` straight from the
+Secret. The keys never reach the ConfigMap, and unlike the placeholder substitution above they
+survive characters such as `/` that would break the `sed` replacement.
+
 The chart also creates a `Secret` for the initial system user password. If a secret already exists, its password is reused.
 
 ## Key Configuration Parameters
@@ -67,8 +74,27 @@ The chart also creates a `Secret` for the initial system user password. If a sec
 | `config.app.existingSecret.enabled` | Use an existing secret for encryption key | `false` |
 | `config.db.existingSecret.enabled` | Use an existing secret for DB password | `false` |
 | `config.redis.existingSecret.enabled` | Use an existing secret for Redis password | `false` |
+| `config.upload.provider` | Upload backend, `fs` or `s3` | `fs` |
+| `config.upload.fs.uploadPath` | Directory for uploads when provider is `fs` | `/libredesk/uploads` |
+| `config.upload.s3.url` | S3 endpoint URL, required for non-AWS providers | `""` |
+| `config.upload.s3.region` | S3 region | `""` |
+| `config.upload.s3.bucket` | S3 bucket name | `""` |
+| `config.upload.s3.bucketPath` | Optional prefix inside the bucket | `""` |
+| `config.upload.s3.expiry` | Presigned URL expiry | `30m` |
+| `config.upload.s3.existingSecret.enabled` | Use an existing secret for S3 credentials | `false` |
+| `config.upload.s3.existingSecret.name` | Existing secret name for S3 credentials | `""` |
+| `config.upload.s3.existingSecret.accessKeyKey` | Secret key holding the access key | `s3AccessKey` |
+| `config.upload.s3.existingSecret.secretKeyKey` | Secret key holding the secret key | `s3SecretKey` |
 
 For a complete list of configuration options, see `chart/values.yaml`.
+
+### Switching the upload provider
+
+LibreDesk initialises a single media store, chosen by `config.upload.provider`, and serves every
+attachment through it regardless of the backend recorded on the row. Switching an existing
+installation from `fs` to `s3` therefore breaks previously uploaded files until they are copied
+into the bucket under the same object names, `bucketPath` included. The uploads PVC is kept and
+still mounted when the provider is `s3`, so nothing is deleted by the switch itself.
 
 ## Secrets and Passwords
 
